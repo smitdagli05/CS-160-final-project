@@ -1,7 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from openai import OpenAI
+from flask_cors import CORS
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='frontend/disaster-prep-frontend/build', static_url_path='')
+CORS(app)
 
 # Set up the OpenAI API key directly
 client = OpenAI(api_key="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")
@@ -21,7 +23,7 @@ def get_likeliest_disaster(state, city, street):
             }
         ],
         model="gpt-3.5-turbo",
-        max_tokens=150,
+        max_tokens=500,
         n=5,
         stop=None,
         temperature=0.7,
@@ -38,7 +40,7 @@ def generate_content(prompt):
             }
         ],
         model="gpt-3.5-turbo",
-        max_tokens=150,
+        max_tokens=500,
         n=5,
         stop=None,
         temperature=0.7,
@@ -53,11 +55,13 @@ def update_profile():
     user_id = data.get("user_id")
     home_address = data.get("home_address")
     contact_info = data.get("contact_info")
+    considerations = data.get("considerations")
 
     if user_id and home_address and contact_info:
         user_profiles[user_id] = {
             "home_address": home_address,
-            "contact_info": contact_info
+            "contact_info": contact_info,
+            "considerations": considerations
         }
         return jsonify({"message": "Profile updated successfully"})
     else:
@@ -72,6 +76,7 @@ def get_user_likeliest_disaster(user_id):
         state = user_profile["home_address"]["state"]
         city = user_profile["home_address"]["city"]
         street = user_profile["home_address"]["street"]
+        considerations = user_profile["considerations"]
         likeliest_disaster = get_likeliest_disaster(state, city, street)
         return jsonify({"likeliest_disaster": likeliest_disaster})
     else:
@@ -86,14 +91,15 @@ def get_user_disaster_info(user_id):
         state = user_profile["home_address"]["state"]
         city = user_profile["home_address"]["city"]
         street = user_profile["home_address"]["street"]
+        considerations = user_profile["considerations"]
         likeliest_disaster = get_likeliest_disaster(state, city, street)
 
-        evacuation_prompt_what_you_need = f"Write evacuation guidelines for {likeliest_disaster} in {city}, {state}, with a focus on What You Need:"
-        evacuation_prompt_things_to_keep_in_mind = f"Write evacuation guidelines for {likeliest_disaster} in {city}, {state}, with a focus on Things To Keep In Mind:"
-        shelter_prompt_what_you_need = f"Write shelter guidelines for {likeliest_disaster} in {city}, {state}, with a focus on What You Need:"
-        shelter_prompt_things_to_keep_in_mind = f"Write shelter guidelines for {likeliest_disaster} in {city}, {state}, with a focus on Things To Keep In Mind:"
-        first_aid_what_you_need = f"Write first aid guidelines for {likeliest_disaster} in {city}, {state}, with a focus on What You Need:"
-        first_aid_things_to_keep_in_mind = f"Write first aid guidelines for {likeliest_disaster} in {city}, {state}, with a focus on Things To Keep In Mind:"
+        evacuation_prompt_what_you_need = f"Write evacuation guidelines for {likeliest_disaster} in {city}, {state}, with a focus on What You Need. {considerations}"
+        evacuation_prompt_things_to_keep_in_mind = f"Write evacuation guidelines for {likeliest_disaster} in {city}, {state}, with a focus on Things To Keep In Mind. {considerations}"
+        shelter_prompt_what_you_need = f"Write shelter guidelines for {likeliest_disaster} in {city}, {state}, with a focus on What You Need. {considerations}"
+        shelter_prompt_things_to_keep_in_mind = f"Write shelter guidelines for {likeliest_disaster} in {city}, {state}, with a focus on Things To Keep In Mind. {considerations}"
+        first_aid_what_you_need = f"Write first aid guidelines for {likeliest_disaster} in {city}, {state}, with a focus on What You Need. {considerations}"
+        first_aid_things_to_keep_in_mind = f"Write first aid guidelines for {likeliest_disaster} in {city}, {state}, with a focus on Things To Keep In Mind. {considerations}"
 
         evacuation_info_what_you_need = generate_content(evacuation_prompt_what_you_need)
         evacuation_info_things_to_keep_in_mind = generate_content(evacuation_prompt_things_to_keep_in_mind)
@@ -135,5 +141,13 @@ def handle_chat():
     else:
         return jsonify({"error": "Invalid request"}), 400
 
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
+
 if __name__ == "__main__":
-   app.run(port=8000, debug=True)
+   app.run(port=3000, debug=True)

@@ -1,0 +1,39 @@
+.plan-options {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+  }
+  
+  .plan-options button {
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: left;
+  }
+  
+  .plan-options button.active {
+    background-color: #e0e0e0;
+  }
+  
+  .plan-details {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 5px;
+  }
+  
+  .plan-details h3 {
+    margin-top: 0;
+  }
+  
+  .plan-details ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+  
+  .plan-details a {
+    display: block;
+    margin-top: 20px;
+  }
