@@ -1,12 +1,16 @@
 from flask import Flask, request, jsonify, send_from_directory
 from openai import OpenAI
 from flask_cors import CORS
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__, static_folder='frontend/disaster-prep-frontend/build', static_url_path='')
 CORS(app)
 
 # Set up the OpenAI API key directly
-client = OpenAI(api_key="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")
+load_dotenv()
+openai_api_key = os.environ.get("OPENAI_API_KEY")
+client = OpenAI(api_key=openai_api_key)
 
 # In-memory storage for user profiles
 user_profiles = {}
