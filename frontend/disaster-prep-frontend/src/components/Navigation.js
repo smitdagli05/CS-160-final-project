@@ -1,14 +1,24 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import './Navigation.css';
 
 function Navigation() {
+  const location = useLocation();
+
   return (
-    <nav>
-      <ul>
-        <li><Link to="/">Plans</Link></li>
-        <li><Link to="/profile">Profile</Link></li>
-        <li><Link to="/chat">Chat</Link></li>
-      </ul>
+    <nav className="bottom-bar">
+      <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
+        <div className="icon plans-icon"></div>
+        <span>Plans</span>
+      </Link>
+      <Link to="/chat" className={location.pathname === '/chat' ? 'active' : ''}>
+        <div className="icon chat-icon"></div>
+        <span>Chat</span>
+      </Link>
+      <Link to="/profile" className={location.pathname === '/profile' ? 'active' : ''}>
+        <div className="icon profile-icon"></div>
+        <span>Profile</span>
+      </Link>
     </nav>
   );
 }

@@ -1,11 +1,13 @@
+import os
 from flask import Flask, request, jsonify, send_from_directory
 from openai import OpenAI
 from flask_cors import CORS
+import requests
 
 app = Flask(__name__, static_folder='frontend/disaster-prep-frontend/build', static_url_path='')
 CORS(app)
 
-client = OpenAI(api_key="replace_with_actual_key")
+client = OpenAI(api_key="use_your_own_key")
 
 # In-memory storage for user profiles
 user_profiles = {}
@@ -46,6 +48,26 @@ def generate_content(prompt):
     )
 
     return response.choices[0].message.content.strip().lower()
+
+# Function to find the nearest safe spot using the Overpass API
+def find_nearest_safe_spot(lat, lon, disaster):
+    overpass_url = "https://overpass-api.de/api/interpreter"
+    query = f"""
+    [out:json];
+    node["emergency"="shelter"]["disaster"~"{disaster}"](around:5000,{lat},{lon});
+    out;
+    """
+    response = requests.get(overpass_url, params={"data": query})
+    data = response.json()
+
+    if len(data["elements"]) > 0:
+        safe_spot = data["elements"][0]
+        safe_spot_lat = safe_spot["lat"]
+        safe_spot_lon = safe_spot["lon"]
+        safe_spot_name = safe_spot.get("tags", {}).get("name", "Unnamed Shelter")
+        return safe_spot_lat, safe_spot_lon, safe_spot_name
+    else:
+        return None, None, None
 
 # API route to update user profile
 @app.route("/api/profile", methods=["POST"])
@@ -107,19 +129,29 @@ def get_user_disaster_info(user_id):
         first_aid_info_what_you_need = generate_content(first_aid_what_you_need)
         first_aid_info_things_to_keep_in_mind = generate_content(first_aid_things_to_keep_in_mind)
 
+        # Find the nearest safe spot for evacuation
+        user_lat = user_profile["home_address"].get("latitude")
+        user_lon = user_profile["home_address"].get("longitude")
+        safe_spot_lat, safe_spot_lon, safe_spot_name = find_nearest_safe_spot(user_lat, user_lon, likeliest_disaster)
+
+        if safe_spot_lat and safe_spot_lon:
+            evacuation_info_additional_resources = f"{safe_spot_lat},{safe_spot_lon}"
+        else:
+            evacuation_info_additional_resources = "No nearby safe spot found. Please check with local authorities for evacuation instructions."
+
         return jsonify({
             "disaster": likeliest_disaster,
             "evacuation": {
                 "what_you_need": evacuation_info_what_you_need.split("\n"),
                 "things_to_keep_in_mind": evacuation_info_things_to_keep_in_mind.split("\n"),
-                "additional_resources": f"https://www.ready.gov/evacuating-yourself-and-your-family"
+                "additional_resources": evacuation_info_additional_resources
             },
             "shelter": {
                 "what_you_need": shelter_info_what_you_need.split("\n"),
                 "things_to_keep_in_mind": shelter_info_things_to_keep_in_mind.split("\n"),
                 "additional_resources": f"https://www.ready.gov/shelter"
             },
-            "first_aid": {
+            "first aid": {
                 "what_you_need": first_aid_info_what_you_need.split("\n"),
                 "things_to_keep_in_mind": first_aid_info_things_to_keep_in_mind.split("\n"),
                 "additional_resources": f"https://www.redcross.org/get-help/how-to-prepare-for-emergencies/types-of-emergencies/{likeliest_disaster}.html"
@@ -149,4 +181,4 @@ def serve(path):
         return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == "__main__":
-   app.run(port=3000, debug=True)
+    app.run(port=3000, debug=True)

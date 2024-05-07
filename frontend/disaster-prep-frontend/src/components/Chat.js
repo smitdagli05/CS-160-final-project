@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import Navigation from './Navigation';
+import './Chat.css';
 
 function Chat() {
   const [userInput, setUserInput] = useState('');
@@ -27,23 +29,36 @@ function Chat() {
   };
 
   return (
-    <div>
-      <h2>Chat</h2>
-      <div className="chat-history">
-        {chatHistory.map((message, index) => (
-          <div key={index}>
-            <p>User: {message.user}</p>
-            <p>Bot: {message.bot}</p>
-          </div>
-        ))}
+    <div className="chat-container">
+      <div className="header">Chat</div>
+      <div className="chat-content">
+        <div className="virtual-coach">
+          <div className="coach-icon"></div>
+          <h3>Virtual Coach</h3>
+          <p>Need assistance? Start chatting with your virtual coach!</p>
+          <button className="new-chat-button" onClick={() => setChatHistory([])}>
+            New Chat
+          </button>
+        </div>
+        <div className="chat-history">
+          {chatHistory.map((message, index) => (
+            <div key={index} className="message">
+              <p className="user-message">{message.user}</p>
+              <p className="bot-message">{message.bot}</p>
+            </div>
+          ))}
+        </div>
       </div>
-      <input
-        type="text"
-        value={userInput}
-        onChange={handleInputChange}
-        placeholder="Type your message..."
-      />
-      <button onClick={handleSendMessage}>Send</button>
+      <div className="chat-input">
+        <input
+          type="text"
+          value={userInput}
+          onChange={handleInputChange}
+          placeholder="Type your message..."
+        />
+        <button onClick={handleSendMessage}>Send</button>
+      </div>
+      <Navigation />
     </div>
   );
 }

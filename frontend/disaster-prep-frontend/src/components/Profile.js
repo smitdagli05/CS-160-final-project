@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import Navigation from './Navigation';
 import './Profile.css';
 
 function Profile() {
@@ -60,71 +61,61 @@ function Profile() {
   };
 
   return (
-    <div>
-      <h2>Profile</h2>
-      <form onSubmit={handleSubmit}>
-        <label>
-          State:
+    <div className="profile-container">
+      <div className="header">Profile</div>
+      <form className="profile-form" onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>State:</label>
           <input
             type="text"
             name="homeAddress.state"
             value={profile.homeAddress.state}
             onChange={handleInputChange}
           />
-        </label>
-        <br />
-        <label>
-          City:
+        </div>
+        <div className="form-group">
+          <label>City:</label>
           <input
             type="text"
             name="homeAddress.city"
             value={profile.homeAddress.city}
             onChange={handleInputChange}
           />
-        </label>
-        <br />
-        <label>
-          Street:
+        </div>
+        <div className="form-group">
+          <label>Street:</label>
           <input
             type="text"
             name="homeAddress.street"
             value={profile.homeAddress.street}
             onChange={handleInputChange}
           />
-        </label>
-        <br />
-        <label>
-          Primary Contact:
+        </div>
+        <div className="form-group">
+          <label>Primary Contact:</label>
           <input
             type="text"
             name="contactInfo.primaryContact"
             value={profile.contactInfo.primaryContact}
             onChange={handleInputChange}
           />
-        </label>
-        <br />
-        <label>
-          Emergency Contact:
+        </div>
+        <div className="form-group">
+          <label>Emergency Contact:</label>
           <input
             type="text"
             name="contactInfo.emergencyContact"
             value={profile.contactInfo.emergencyContact}
             onChange={handleInputChange}
           />
-        </label>
-        <br />
-        <label>
-          Do you want us to keep anything specific in mind for your emergency plans?
-          <input
-            type="text"
-            name="considerations"
-            value={profile.considerations}
-            onChange={handleInputChange}
-          />
-        </label>
-        <br />
+        </div>
+        <div className="form-group">
+          <label>Do you want us to keep anything specific in mind for your emergency plans?</label>
+          <input type="text" name="considerations" value={profile.considerations} onChange={handleInputChange} />
+        </div>
         <button type="submit">Update Profile</button>
       </form>
+      <Navigation />
     </div>
   );
 }

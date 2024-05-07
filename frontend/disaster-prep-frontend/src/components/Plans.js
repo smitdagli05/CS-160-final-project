@@ -1,21 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './Plans.css'; 
+import Navigation from './Navigation';
+import './Plans.css';
 
 function Plans() {
-  const [selectedPlan, setSelectedPlan] = useState('evacuation');
+  const [selectedPlan, setSelectedPlan] = useState(null);
   const [disasterInfo, setDisasterInfo] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userLocation, setUserLocation] = useState(null);
 
   useEffect(() => {
     fetchDisasterInfo();
+    getUserLocation();
   }, []);
 
   const fetchDisasterInfo = async () => {
     try {
       const response = await axios.get('/api/disaster-info/user123'); // Replace 'user123' with the actual user ID
       setDisasterInfo(response.data);
+      setIsLoading(false);
     } catch (error) {
       console.error('Error fetching disaster info:', error);
+      setIsLoading(false);
+    }
+  };
+
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ latitude, longitude });
+        },
+        (error) => {
+          console.error('Error getting user location:', error);
+        }
+      );
+    } else {
+      console.error('Geolocation is not supported by this browser.');
     }
   };
 
@@ -23,36 +45,35 @@ function Plans() {
     setSelectedPlan(plan);
   };
 
-  if (!disasterInfo) {
-    return <div>Loading...</div>;
-  }
-
-  const { evacuation, shelter, first_aid } = disasterInfo;
-
   return (
-    <div>
-      <h2>Plans</h2>
+    <div className="plans-container">
+      <div className="header">Plans</div>
       <div className="plan-options">
-        <button
-          className={selectedPlan === 'evacuation' ? 'active' : ''}
+        <div
+          className={`plan-option ${selectedPlan === 'evacuation' ? 'active' : ''}`}
           onClick={() => handlePlanChange('evacuation')}
         >
-          Evacuation
-        </button>
-        <button
-          className={selectedPlan === 'shelter' ? 'active' : ''}
+          <span>Evacuation</span>
+          <div className="arrow"></div>
+        </div>
+        <div
+          className={`plan-option ${selectedPlan === 'shelter' ? 'active' : ''}`}
           onClick={() => handlePlanChange('shelter')}
         >
-          Shelter in Place
-        </button>
-        <button
-          className={selectedPlan === 'first_aid' ? 'active' : ''}
-          onClick={() => handlePlanChange('first_aid')}
+          <span>Shelter in Place</span>
+          <div className="arrow"></div>
+        </div>
+        <div
+          className={`plan-option ${selectedPlan === 'first aid' ? 'active' : ''}`}
+          onClick={() => handlePlanChange('first aid')}
         >
-          First Aid
-        </button>
+          <span>First Aid</span>
+          <div className="arrow"></div>
+        </div>
       </div>
-      {selectedPlan && (
+      {isLoading ? (
+        <div className="loading">Loading...</div>
+      ) : selectedPlan && disasterInfo ? (
         <div className="plan-details">
           <h3>{selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}</h3>
           <h4>What You Need</h4>
@@ -67,11 +88,30 @@ function Plans() {
               <li key={index}>{item}</li>
             ))}
           </ul>
+          {selectedPlan === 'evacuation' && (
+            <div className="evacuation-route">
+              <h4>Evacuation Route</h4>
+              {userLocation ? (
+                <iframe
+                  title="Evacuation Route"
+                  width="100%"
+                  height="400"
+                  frameBorder="0"
+                  src={`https://www.google.com/maps/embed/v1/directions?key=AIzaSyChJ6RIAcQaZkW1WNJHveCDh7a_KlhLtTo&origin=${userLocation.latitude},${userLocation.longitude}&destination=${disasterInfo.evacuation.additional_resources}&zoom=12`}
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <p>Location permission not granted. Unable to display evacuation route.</p>
+              )}
+            </div>
+          )}
+          <h4>Additional Resources</h4>
           <a href={disasterInfo[selectedPlan].additional_resources} target="_blank" rel="noopener noreferrer">
-            Additional Resources
+            {disasterInfo[selectedPlan].additional_resources}
           </a>
         </div>
-      )}
+      ) : null}
+      <Navigation />
     </div>
   );
 }
